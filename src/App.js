@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ReactPlayer from 'react-player';
 import { Play, Pause, SkipForward, SkipBack, Volume2, Twitter, Instagram, Youtube, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "./components/ui/avatar"
@@ -8,17 +8,59 @@ import { Button } from "./components/ui/button";
 import { CardContent } from "./components/ui/card";
 import { ScrollArea } from "./components/ui/scroll-area";
 import { Slider } from './components/ui/slider';
+import { Progress } from "./components/ui/progress";
 
-// Mock data remains the same
+// Modify the song data to include formats and sizes
 const artist = {
   name: "Boy Teddy",
   image: "logo.png",
   songs: [
-    { id: 1, title: "Track 1", url: "/audio/habibi.mp3" },
-    { id: 2, title: "Track 2", url: "/audio/jehovah.mp3" },
-    { id: 3, title: "Track 3", url: "/audio/khuleka.mp3" },
-    { id: 4, title: "Track 4", url: "/audio/banike.mp3" },
-    { id: 5, title: "Track 5", url: "/audio/sibaningi.mp3" },
+    { 
+      id: 1, 
+      title: "Track 1", 
+      url: "/audio/habibi.mp3",
+      // Add alternative formats for better browser compatibility
+      formats: {
+        mp3: "/audio/habibi.mp3",
+      }
+    },
+    { 
+      id: 2, 
+      title: "Track 2", 
+      url: "/audio/banike.mp3",
+      // Add alternative formats for better browser compatibility
+      formats: {
+        mp3: "/audio/banike.mp3",
+      }
+    },
+    { 
+      id: 3, 
+      title: "Track 3", 
+      url: "/audio/khuleka.mp3",
+      // Add alternative formats for better browser compatibility
+      formats: {
+        mp3: "/audio/khuleka.mp3",
+      }
+    },
+    { 
+      id: 4, 
+      title: "Track 4", 
+      url: "/audio/jehovah.mp3",
+      // Add alternative formats for better browser compatibility
+      formats: {
+        mp3: "/audio/jehovah.mp3",
+      }
+    },
+    { 
+      id: 5, 
+      title: "Track 5", 
+      url: "/audio/sibaningi.mp3",
+      // Add alternative formats for better browser compatibility
+      formats: {
+        mp3: "/audio/sibaningi.mp3",
+      }
+    },
+    // ... repeat for other tracks
   ],
   socialMedia: {
     twitter: "https://twitter.com/lilcode",
@@ -31,59 +73,132 @@ export default function RapperArtistApp() {
   const [currentSong, setCurrentSong] = useState(artist.songs[0]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1);
+  const [error, setError] = useState(null);
   const playerRef = useRef(null);
+  const audioPreloadRefs = useRef({});
 
-
-
-  const handleSongSelect = (song) => {
-    setCurrentSong(song);
-    setIsPlaying(true);
-    setIsBuffering(true); // Set buffering state when new song is selected
-  };
-
-  const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
-    setVolume(1);
-  };
-
-  const handlePrevious = () => {
+  // Preload adjacent tracks
+  useEffect(() => {
     const currentIndex = artist.songs.findIndex(song => song.id === currentSong.id);
-    const previousIndex = (currentIndex - 1 + artist.songs.length) % artist.songs.length;
-    setCurrentSong(artist.songs[previousIndex]);
-    setIsBuffering(true);
-  };
+    const preloadTracks = [
+      artist.songs[(currentIndex + 1) % artist.songs.length],
+      artist.songs[(currentIndex - 1 + artist.songs.length) % artist.songs.length]
+    ];
 
-  const handleNext = () => {
-    const currentIndex = artist.songs.findIndex(song => song.id === currentSong.id);
-    const nextIndex = (currentIndex + 1) % artist.songs.length;
-    setCurrentSong(artist.songs[nextIndex]);
-    setIsBuffering(true);
-  };
+    // Clear old preloaded tracks
+    audioPreloadRefs.current = {};
 
-  const handleProgress = (state) => {
-    setProgress(state.played);
-  };
+    // Preload adjacent tracks
+    preloadTracks.forEach(track => {
+      const audio = new Audio();
+      audio.preload = "metadata"; // Only load metadata initially
+      audio.src = track.url;
+      audioPreloadRefs.current[track.id] = audio;
+    });
 
-  const handleDuration = (duration) => {
-    setDuration(duration);
-  };
-
-  const handleBuffer = () => {
-    setIsBuffering(true);
-  };
-
-  const handleBufferEnd = () => {
-    setIsBuffering(false);
-  };
+    // Cleanup function
+    return () => {
+      Object.values(audioPreloadRefs.current).forEach(audio => {
+        audio.src = '';
+        audio.load();
+      });
+    };
+  }, [currentSong]);
 
   const handleSeek = (newValue) => {
     setProgress(newValue[0]);
     playerRef.current.seekTo(newValue[0]);
   };
 
+  // Error handling function
+  const handleError = (error) => {
+    console.error('Playback Error:', error);
+    setError('Unable to play this track. Please try again later.');
+    setIsBuffering(false);
+    
+    // Try to recover by switching formats if available
+    if (currentSong.formats) {
+      const formats = Object.values(currentSong.formats);
+      const currentFormat = currentSong.url;
+      const nextFormat = formats[(formats.indexOf(currentFormat) + 1) % formats.length];
+      
+      if (nextFormat !== currentFormat) {
+        setCurrentSong({ ...currentSong, url: nextFormat });
+      }
+    }
+  };
+
+  const handleSongSelect = async (song) => {
+    setError(null);
+    setIsBuffering(true);
+    setLoadingProgress(0);
+    
+    // Check if song was preloaded
+    const preloadedAudio = audioPreloadRefs.current[song.id];
+    if (preloadedAudio?.readyState >= 2) {
+      setLoadingProgress(100);
+    }
+
+    setCurrentSong(song);
+    setIsPlaying(true);
+  };
+
+  // Modified player event handlers
+  const handleBuffer = () => {
+    setIsBuffering(true);
+  };
+
+  const handleBufferEnd = () => {
+    setIsBuffering(false);
+    setLoadingProgress(100);
+  };
+
+  const handleProgress = (state) => {
+    setProgress(state.played);
+    // Update loading progress based on loaded fraction
+    setLoadingProgress(state.loaded * 100);
+  };
+
+  // Add ready handler
+  const handleReady = () => {
+    setIsBuffering(false);
+    setLoadingProgress(100);
+  };
+
+  // Rest of the handlers remain the same
+  const handlePlayPause = () => {
+    if (error) return;
+    setIsPlaying(!isPlaying);
+  };
+
+  const handlePrevious = () => {
+    setError(null);
+    const currentIndex = artist.songs.findIndex(song => song.id === currentSong.id);
+    const previousIndex = (currentIndex - 1 + artist.songs.length) % artist.songs.length;
+    setCurrentSong(artist.songs[previousIndex]);
+    setIsBuffering(true);
+    setLoadingProgress(0);
+  };
+
+  const handleNext = () => {
+    setError(null);
+    const currentIndex = artist.songs.findIndex(song => song.id === currentSong.id);
+    const nextIndex = (currentIndex + 1) % artist.songs.length;
+    setCurrentSong(artist.songs[nextIndex]);
+    setIsBuffering(true);
+    setLoadingProgress(0);
+  };
+
+  // Add this component for showing loading progress
+  const LoadingIndicator = () => (
+    <div className="flex flex-col items-center">
+      <Loader2 className="h-4 w-4 animate-spin mb-1 text-primary" />
+      <Progress value={loadingProgress} className="w-24 h-1" />
+    </div>
+  );
 
   const formatTime = (seconds) => {
     const date = new Date(seconds * 1000);
@@ -180,17 +295,27 @@ export default function RapperArtistApp() {
 
       <div className="fixed bottom-0 left-0 right-0 bg-[#0a1a1b] border-t border-gray-700">
         <div className="max-w-4xl mx-auto p-4">
-          <ReactPlayer
+        <ReactPlayer
             ref={playerRef}
             url={currentSong.url}
             playing={isPlaying}
-            volume={volume}
+            volume={1}
             onProgress={handleProgress}
-            onDuration={handleDuration}
+            onDuration={setDuration}
             onBuffer={handleBuffer}
             onBufferEnd={handleBufferEnd}
+            onReady={handleReady}
+            onError={handleError}
             width="0"
             height="0"
+            config={{
+              file: {
+                forceAudio: true,
+                attributes: {
+                  preload: 'auto',
+                }
+              }
+            }}
           />
           <div className="flex items-center justify-center mb-2">
             <p className="font-semibold">{currentSong.title}</p>
@@ -240,7 +365,7 @@ export default function RapperArtistApp() {
             <div className="flex items-center space-x-2">
               <Volume2 className="h-4 hidden w-4" />
               <Slider
-                value={[volume]}
+                value={[1]}
                 max={1}
                 step={0.01}
                 className="w-80 hidden"

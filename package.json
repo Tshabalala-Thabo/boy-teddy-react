@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.1",
+    "@radix-ui/react-progress": "^1.1.0",
     "@radix-ui/react-scroll-area": "^1.2.0",
     "@radix-ui/react-slider": "^1.2.1",
     "@radix-ui/react-slot": "^1.1.0",
@@ -46,7 +47,7 @@
     ]
   },
   "devDependencies": {
-   "@shadcn/ui": "^0.0.4",
+    "@shadcn/ui": "^0.0.4",
     "autoprefixer": "^10.4.14",
     "customize-cra": "^1.0.0",
     "postcss": "^8.4.24",
