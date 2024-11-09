@@ -317,10 +317,12 @@ export default function RapperArtistApp() {
               }
             }}
           />
-          <div className="flex items-center justify-center mb-2">
+            <div className="flex flex-col items-center mb-2">
             <p className="font-semibold">{currentSong.title}</p>
-            {isBuffering && (
-              <Loader2 className="h-4 w-4 animate-spin ml-2 text-primary" />
+            {error ? (
+              <p className="text-red-500 text-sm mt-1">{error}</p>
+            ) : (
+              isBuffering && <LoadingIndicator />
             )}
           </div>
           <div className="mb-2">
