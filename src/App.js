@@ -5,7 +5,7 @@ import ReactPlayer from 'react-player';
 import { Play, Pause, SkipForward, SkipBack, Volume2, Twitter, Instagram, Youtube } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "./components/ui/avatar"
 import { Button } from "./components/ui/button";
-import { Card, CardContent } from "./components/ui/card";
+import { CardContent } from "./components/ui/card";
 import { ScrollArea } from "./components/ui/scroll-area";
 import { Slider } from './components/ui/slider';
 
