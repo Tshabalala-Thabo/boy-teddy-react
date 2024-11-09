@@ -33,7 +33,7 @@ export default function RapperArtistApp() {
   const [isBuffering, setIsBuffering] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1);
+  const [volume] = useState(1);
   const playerRef = useRef(null);
 
   const handleSongSelect = (song) => {
