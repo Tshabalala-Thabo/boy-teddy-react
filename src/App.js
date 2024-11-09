@@ -140,7 +140,7 @@ export default function RapperArtistApp() {
             </div>
           </div>
 
-          <div className="bg-[#091516 border rounded-xl border-1 py-3 text-white">
+          <div className="bg-[#091516] border rounded-xl border-1 py-3 text-white">
             <CardContent className="p-6">
               <h2 className="text-2xl font-semibold mb-4">About <span className='text-primary font-permanent-marker'>{artist.name}</span></h2>
               <p className="mb-4">
