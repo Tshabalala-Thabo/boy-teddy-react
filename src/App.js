@@ -2,23 +2,23 @@
 
 import { useState, useRef } from 'react';
 import ReactPlayer from 'react-player';
-import { Play, Pause, SkipForward, SkipBack, Volume2, Twitter, Instagram, Youtube } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Volume2, Twitter, Instagram, Youtube, Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "./components/ui/avatar"
 import { Button } from "./components/ui/button";
 import { CardContent } from "./components/ui/card";
 import { ScrollArea } from "./components/ui/scroll-area";
 import { Slider } from './components/ui/slider';
 
-// Mock data for the rapper artist
+// Mock data remains the same
 const artist = {
   name: "Boy Teddy",
   image: "logo.png",
   songs: [
     { id: 1, title: "Track 1", url: "/audio/habibi.mp3" },
     { id: 2, title: "Track 2", url: "/audio/jehovah.mp3" },
-    { id: 3, title: "Track 3", url: "/audio/jehovah.mp3" },
-    { id: 4, title: "Track 4", url: "/audio/jehovah.mp3" },
-    { id: 5, title: "Track 5", url: "/audio/jehovah.mp3" },
+    { id: 3, title: "Track 3", url: "/audio/khuleka.mp3" },
+    { id: 4, title: "Track 4", url: "/audio/banike.mp3" },
+    { id: 5, title: "Track 5", url: "/audio/sibaningi.mp3" },
   ],
   socialMedia: {
     twitter: "https://twitter.com/lilcode",
@@ -30,6 +30,7 @@ const artist = {
 export default function RapperArtistApp() {
   const [currentSong, setCurrentSong] = useState(artist.songs[0]);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
@@ -38,6 +39,7 @@ export default function RapperArtistApp() {
   const handleSongSelect = (song) => {
     setCurrentSong(song);
     setIsPlaying(true);
+    setIsBuffering(true); // Set buffering state when new song is selected
   };
 
   const handlePlayPause = () => {
@@ -48,12 +50,14 @@ export default function RapperArtistApp() {
     const currentIndex = artist.songs.findIndex(song => song.id === currentSong.id);
     const previousIndex = (currentIndex - 1 + artist.songs.length) % artist.songs.length;
     setCurrentSong(artist.songs[previousIndex]);
+    setIsBuffering(true);
   };
 
   const handleNext = () => {
     const currentIndex = artist.songs.findIndex(song => song.id === currentSong.id);
     const nextIndex = (currentIndex + 1) % artist.songs.length;
     setCurrentSong(artist.songs[nextIndex]);
+    setIsBuffering(true);
   };
 
   const handleProgress = (state) => {
@@ -62,6 +66,14 @@ export default function RapperArtistApp() {
 
   const handleDuration = (duration) => {
     setDuration(duration);
+  };
+
+  const handleBuffer = () => {
+    setIsBuffering(true);
+  };
+
+  const handleBufferEnd = () => {
+    setIsBuffering(false);
   };
 
   const handleSeek = (newValue) => {
@@ -87,6 +99,7 @@ export default function RapperArtistApp() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d2426] to-black text-white">
       <div className="max-w-4xl mx-auto p-8 pb-48">
+        {/* Header section remains the same */}
         <header className="flex items-center mb-8">
           <Avatar className="h-24 w-24 mr-6">
             <AvatarImage src={artist.image} alt={artist.name} />
@@ -105,10 +118,17 @@ export default function RapperArtistApp() {
                     {artist.songs.map((song) => (
                       <li
                         key={song.id}
-                        className={`p-2 rounded cursor-pointer hover:bg-white hover:bg-opacity-20 transition ${currentSong.id === song.id ? 'text-primary bg-white bg-opacity-20' : ''}`}
+                        className={`p-2 rounded cursor-pointer hover:bg-white hover:bg-opacity-20 transition ${
+                          currentSong.id === song.id ? 'text-primary bg-white bg-opacity-20' : ''
+                        }`}
                         onClick={() => handleSongSelect(song)}
                       >
-                        {song.title}
+                        <div className="flex items-center justify-between">
+                          <span>{song.title}</span>
+                          {currentSong.id === song.id && isBuffering && (
+                            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                          )}
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -116,6 +136,7 @@ export default function RapperArtistApp() {
               </CardContent>
             </div>
 
+            {/* Social Media section remains the same */}
             <div className="bg-[#091516] py-3 border rounded-xl border-1 text-white">
               <CardContent className="p-6">
                 <h2 className="text-2xl font-semibold mb-4">Social Media</h2>
@@ -140,6 +161,7 @@ export default function RapperArtistApp() {
             </div>
           </div>
 
+          {/* About section remains the same */}
           <div className="bg-[#091516] border rounded-xl border-1 py-3 text-white">
             <CardContent className="p-6">
               <h2 className="text-2xl font-semibold mb-4">About <span className='text-primary font-permanent-marker'>{artist.name}</span></h2>
@@ -165,10 +187,17 @@ export default function RapperArtistApp() {
             volume={volume}
             onProgress={handleProgress}
             onDuration={handleDuration}
+            onBuffer={handleBuffer}
+            onBufferEnd={handleBufferEnd}
             width="0"
             height="0"
           />
-          <p className="text-center mb-2 font-semibold">{currentSong.title}</p>
+          <div className="flex items-center justify-center mb-2">
+            <p className="font-semibold">{currentSong.title}</p>
+            {isBuffering && (
+              <Loader2 className="h-4 w-4 animate-spin ml-2 text-primary" />
+            )}
+          </div>
           <div className="mb-2">
             <Slider
               value={[progress]}
@@ -176,15 +205,15 @@ export default function RapperArtistApp() {
               step={0.01}
               onValueChange={handleSeek}
               className="w-full relative bg-white bg-opacity-20
-            [&>.relative]:h-2
-            [&_[role=slider]]:h-4
-            [&_[role=slider]]:w-4
-            [&_[role=slider]]:bg-[#FF9E00]
-            [&_[role=slider]]:border-2
-            [&_[role=slider]]:border-black
-            [&_[role=slider]]:focus:ring-2
-            [&_[role=slider]]:focus:ring-primary
-            [&_[role=slider]]:focus:ring-offset-2"
+                [&>.relative]:h-2
+                [&_[role=slider]]:h-4
+                [&_[role=slider]]:w-4
+                [&_[role=slider]]:bg-[#FF9E00]
+                [&_[role=slider]]:border-2
+                [&_[role=slider]]:border-black
+                [&_[role=slider]]:focus:ring-2
+                [&_[role=slider]]:focus:ring-primary
+                [&_[role=slider]]:focus:ring-offset-2"
             />
             <div className="flex justify-between text-sm mt-1">
               <span>{formatTime(progress * duration)}</span>
@@ -196,7 +225,12 @@ export default function RapperArtistApp() {
               <Button variant="ghost" size="icon" onClick={handlePrevious}>
                 <SkipBack className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={handlePlayPause}>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handlePlayPause}
+                disabled={isBuffering}
+              >
                 {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
               </Button>
               <Button variant="ghost" size="icon" onClick={handleNext}>
