@@ -81,9 +81,6 @@ export default function RapperArtistApp() {
     playerRef.current.seekTo(newValue[0]);
   };
 
-  const handleVolumeChange = (newValue) => {
-    setVolume(newValue[0]);
-  };
 
   const formatTime = (seconds) => {
     const date = new Date(seconds * 1000);
