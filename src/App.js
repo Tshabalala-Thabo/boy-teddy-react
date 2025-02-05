@@ -12,7 +12,7 @@ import { Progress } from "./components/ui/progress";
 
 // Modify the song data to include formats and sizes
 const artist = {
-  name: "Boy Teddy",
+  name: "Boii Teddy",
   image: "logo.png",
   songs: [
     { 
